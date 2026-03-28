@@ -1,0 +1,62 @@
+create table if not exists contratos_patrimoniais (
+  id bigserial primary key,
+  numero_contrato varchar(50) not null,
+  ano_contrato integer not null,
+  fornecedor varchar(255) not null,
+  cnpj_cpf varchar(30),
+  objeto text not null,
+  modalidade varchar(100),
+  processo varchar(100),
+  data_assinatura date,
+  data_publicacao date,
+  vigencia_inicio date,
+  vigencia_fim date,
+  valor_contrato numeric(18,2) not null default 0,
+  situacao varchar(30),
+  secretaria varchar(150),
+  categoria_patrimonial varchar(100),
+  subcategoria_patrimonial varchar(150),
+  nbc_tsp_principal varchar(50),
+  tipo_reconhecimento varchar(50),
+  forma_apropriacao varchar(50),
+  risco_contabil varchar(20),
+  gera_ativo boolean not null default false,
+  gera_estoque boolean not null default false,
+  gera_passivo_contratual boolean not null default false,
+  exige_revisao_manual boolean not null default false,
+  classificado_por_regra boolean not null default false,
+  centro_custo varchar(100),
+  unidade_executora varchar(150),
+  segmento_contabil varchar(100),
+  objeto_custo varchar(150),
+  indicador_depreciavel boolean not null default false,
+  vida_util_meses integer,
+  indicador_amortizavel boolean not null default false,
+  indicador_consumo_estoque boolean not null default false,
+  observacao_tecnica text,
+  texto_normalizado text,
+  status_aprovacao text default 'Importado',
+  usuario_revisao uuid,
+  usuario_aprovacao uuid,
+  data_revisao timestamp,
+  data_aprovacao timestamp,
+  created_at timestamp default now(),
+  updated_at timestamp default now()
+);
+
+create table if not exists usuarios_sistema (
+  id uuid primary key,
+  nome text not null,
+  email text unique not null,
+  perfil text not null check (perfil in ('operacional','contador','controladoria','administrador')),
+  secretaria text,
+  created_at timestamp default now()
+);
+
+create table if not exists contratos_log (
+  id bigserial primary key,
+  contrato_id bigint references contratos_patrimoniais(id) on delete cascade,
+  usuario_id uuid,
+  acao text not null,
+  data timestamp default now()
+);
