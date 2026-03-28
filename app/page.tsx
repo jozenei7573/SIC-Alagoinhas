@@ -1,60 +1,44 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts'
-import { applyClassification, DEFAULT_RULES, normalizeText } from '@/lib/classifier'
-import { canApprove, canEdit, canImport, canManageRules } from '@/lib/auth'
-import type { Contrato, UsuarioSistema, PerfilUsuario } from '@/lib/types'
+import { useState } from 'react'
+import { createClient } from '@supabase/supabase-js'
 
-const STORAGE_KEY = 'custo-patrimonial-cloudflare-v1'
-const COLORS = ['#111827', '#334155', '#64748b', '#94a3b8', '#cbd5e1', '#0f766e']
-const SECRETARIAS = ['SEDUC', 'SESAU', 'SEMAS', 'SEFAZ', 'SEOP', 'SECET', 'SESEP', 'SDRA', 'SEGOV', 'PGM', 'CGM', 'SEAD', 'OUTROS']
-const PERFIS = ['operacional', 'contador', 'controladoria', 'administrador'] as const
+// conexão com Supabase
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
-export default function Page() {
-  const [store, setStore] = useState<any>({ users: [], contracts: [], currentUserId: null })
-  const [search, setSearch] = useState('')
-  const [notice, setNotice] = useState('')
-
-  // ✅ CORREÇÃO AQUI
-  const [newUser, setNewUser] = useState<{
-    nome: string
-    email: string
-    perfil: PerfilUsuario
-    secretaria: string
-  }>({
+export default function Home() {
+  const [newUser, setNewUser] = useState({
     nome: '',
     email: '',
     perfil: 'operacional',
     secretaria: 'OUTROS'
   })
 
-  useEffect(() => {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) setStore(JSON.parse(raw))
-  }, [])
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(store))
-  }, [store])
-
-  function addUser() {
-    if (!newUser.nome || !newUser.email) return
-
-    const user: UsuarioSistema = {
-      id: crypto.randomUUID(),
-      nome: newUser.nome,
-      email: newUser.email,
-      perfil: newUser.perfil,
-      secretaria: newUser.secretaria
+  async function addUser() {
+    if (!newUser.nome || !newUser.email) {
+      alert('Preencha nome e email')
+      return
     }
 
-    setStore((prev: any) => ({
-      ...prev,
-      users: [...prev.users, user]
-    }))
+    const { error } = await supabase.from('usuarios').insert([
+      {
+        nome: newUser.nome,
+        email: newUser.email,
+        perfil: newUser.perfil,
+        secretaria: newUser.secretaria
+      }
+    ])
 
-    setNotice('Usuário adicionado com sucesso.')
+    if (error) {
+      console.error(error)
+      alert('Erro ao salvar')
+      return
+    }
+
+    alert('Usuário salvo com sucesso!')
 
     setNewUser({
       nome: '',
@@ -65,38 +49,36 @@ export default function Page() {
   }
 
   return (
-    <main className="p-6">
+    <main style={{ padding: 20 }}>
       <h1>Sistema de Custo Patrimonial</h1>
 
-      {notice && <p>{notice}</p>}
+      <h2>Novo Usuário</h2>
 
-      <div style={{ marginTop: 20 }}>
-        <h2>Novo Usuário</h2>
-
+      <div style={{ display: 'flex', gap: 10 }}>
         <input
           placeholder="Nome"
           value={newUser.nome}
-          onChange={(e) => setNewUser({ ...newUser, nome: e.target.value })}
+          onChange={(e) =>
+            setNewUser({ ...newUser, nome: e.target.value })
+          }
         />
 
         <input
           placeholder="Email"
           value={newUser.email}
-          onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+          onChange={(e) =>
+            setNewUser({ ...newUser, email: e.target.value })
+          }
         />
 
-        {/* ✅ CORREÇÃO AQUI */}
         <select
           value={newUser.perfil}
           onChange={(e) =>
-            setNewUser({ ...newUser, perfil: e.target.value as PerfilUsuario })
+            setNewUser({ ...newUser, perfil: e.target.value })
           }
         >
-          {PERFIS.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
+          <option value="operacional">operacional</option>
+          <option value="admin">admin</option>
         </select>
 
         <select
@@ -105,11 +87,9 @@ export default function Page() {
             setNewUser({ ...newUser, secretaria: e.target.value })
           }
         >
-          {SECRETARIAS.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
+          <option value="OUTROS">OUTROS</option>
+          <option value="FINANCAS">FINANÇAS</option>
+          <option value="SAUDE">SAÚDE</option>
         </select>
 
         <button onClick={addUser}>Adicionar</button>
