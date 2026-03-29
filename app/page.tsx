@@ -1,15 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-// conexão com Supabase
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
 export default function Home() {
+  const supabase = useMemo(() => {
+    return createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+  }, [])
+
   const [newUser, setNewUser] = useState({
     nome: '',
     email: '',
@@ -34,7 +35,7 @@ export default function Home() {
 
     if (error) {
       console.error(error)
-      alert('Erro ao salvar')
+      alert('Erro ao salvar usuário')
       return
     }
 
@@ -78,7 +79,9 @@ export default function Home() {
           }
         >
           <option value="operacional">operacional</option>
-          <option value="admin">admin</option>
+          <option value="contador">contador</option>
+          <option value="controladoria">controladoria</option>
+          <option value="administrador">administrador</option>
         </select>
 
         <select
@@ -88,8 +91,10 @@ export default function Home() {
           }
         >
           <option value="OUTROS">OUTROS</option>
-          <option value="FINANCAS">FINANÇAS</option>
-          <option value="SAUDE">SAÚDE</option>
+          <option value="SEFAZ">SEFAZ</option>
+          <option value="SESAU">SESAU</option>
+          <option value="SEDUC">SEDUC</option>
+          <option value="SEAD">SEAD</option>
         </select>
 
         <button onClick={addUser}>Adicionar</button>
